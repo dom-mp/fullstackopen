@@ -1,39 +1,7 @@
-import { useState, useEffect } from 'react'
-import axios from 'axios'
-
-const Search = (props) => {
-  return (
-    <div>
-    <h2>PhoneBook</h2>
-    filter shown with: <input onChange={props.filterHandler} value={props.filterInput}/>
-  </div> 
-  )
-}
-
-const Form = (props) => {
-  return (
-    <form onSubmit={props.addPerson}>
-      <div>
-        name: <input onChange={props.onChangeHandler} value={props.newName}/>
-      </div>
-      <div>number: <input onChange={props.phoneHandler} value={props.newPhone}/></div>
-      <div>
-        <button type="submit">add</button>
-      </div>
-  </form>
-  )
-}
-
-const Names = (props) => {
-  const filteredPersons = props.filteredPersons;
-  return (
-    <>
-      {filteredPersons.map(person => {
-        return <p key={person.name}>{person.name} {person.phoneNum}</p>
-      })}
-    </>
-  )
-}
+import { useState, useEffect } from 'react';
+import { Search, Form, Names } from './components/components.jsx'
+import phoneServices from './services/services.js'
+// import axios from 'axios';
 
 const App = () => {
   const [persons, setPersons] = useState([])
@@ -44,15 +12,33 @@ const App = () => {
 
   const addPerson = (event) => {
     event.preventDefault();
+    let newPerson = {name: newName, phoneNum: newPhone, id: newName};
 
     if (!persons.some(obj => obj.name === newName)) {
-      let newPersons = [...persons];
-      console.log(newName, newPhone)
-      newPersons.push({name: newName, phoneNum: newPhone});
-      setPersons(newPersons);
-      setFilteredPersons(newPersons);
+      phoneServices.create(newPerson)
+      .then(data => {
+        console.log(data);
+        let newPersons = [...persons];
+        newPersons.push(newPerson);
+
+        setPersons(newPersons);
+        setFilteredPersons(newPersons);
+      })
     } else {
-      alert(`${newName} is aleady added to the Phonebook`);
+      let replace = window.confirm(`${newName} is already added to the Phonebook, replace the old number with a new one?`);
+
+      if (replace) {
+        let id = persons.filter(person => person.name === newName)[0].id;
+        let url = `http://localhost:3001/persons/${id}`;
+        phoneServices.updatePerson(url, newPerson)
+        .then(_ => {
+          phoneServices.getAll()
+          .then(data => {
+            setPersons(data);
+            setFilteredPersons(data);
+          })
+        })
+      }
     }
     setNewName('');
     setPhone('');
@@ -74,16 +60,32 @@ const App = () => {
     setPhone(event.target.value);
   }
 
-  const getPersons = () => {
-    axios.get('http://localhost:3001/persons')
-    .then(response => {
-      // console.log(response.data);
-      setPersons(response.data);
-      setFilteredPersons(response.data);
+  useEffect(() => {
+    phoneServices.getAll()
+    .then(data => {
+      setPersons(data);
+      setFilteredPersons(data);
     })
-  }
+  }, []);
 
-  useEffect(getPersons, []);
+  const deleteHandler = (id) => {
+    const url = `http://localhost:3001/persons/${id}`;
+
+    return (event) => {
+      let value = window.confirm('Are you sure you want to delete this?');
+
+      if (value) {
+        phoneServices.toDelete(url)
+        .then(_ => {
+          phoneServices.getAll()
+          .then(data => {
+            setPersons(data);
+            setFilteredPersons(data);
+          });
+        });
+      }
+    }
+  }
 
   return (
     <div>
@@ -93,7 +95,7 @@ const App = () => {
       <h2>Add a New:</h2>
         <Form addPerson={addPerson} onChangeHandler={onChangeHandler} newName={newName} phoneHandler={phoneHandler} newPhone={newPhone}/>
       <h2>Numbers</h2>
-        <Names filteredPersons={filteredPersons}/>
+        <Names filteredPersons={filteredPersons} deleteHandler={deleteHandler} />
     </div>
   )
 }
