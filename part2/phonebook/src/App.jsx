@@ -9,6 +9,7 @@ const App = () => {
   const [newPhone, setPhone] = useState('');
   const [filterInput, setFilterInput] = useState('');
   const [filteredPersons, setFilteredPersons] = useState(persons);
+  const [errorMessage, setErrorMessage] = useState(null);
 
   const addPerson = (event) => {
     event.preventDefault();
@@ -23,6 +24,10 @@ const App = () => {
 
         setPersons(newPersons);
         setFilteredPersons(newPersons);
+        setErrorMessage(`${newName} was added successfully`)
+        setTimeout(() => {
+          setErrorMessage(null);
+        }, 5000);
       })
     } else {
       let replace = window.confirm(`${newName} is already added to the Phonebook, replace the old number with a new one?`);
@@ -90,7 +95,7 @@ const App = () => {
   return (
     <div>
       <div>
-        <Search filterHandler={filterHandler} filterInput={filterInput}/>
+        <Search filterHandler={filterHandler} filterInput={filterInput} errorMessage={errorMessage}/>
       </div>
       <h2>Add a New:</h2>
         <Form addPerson={addPerson} onChangeHandler={onChangeHandler} newName={newName} phoneHandler={phoneHandler} newPhone={newPhone}/>

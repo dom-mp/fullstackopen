@@ -1,7 +1,24 @@
+const Notification = ({ errorMessage }) => {
+  const addedStyle = {
+    color: 'green',
+    fontStyle: 'italic',
+    fontSize: 16,
+  }
+}
+
 export const Search = (props) => {
+  const addedStyle = {
+    color: 'green',
+    fontStyle: 'italic',
+    fontSize: 16,
+  }
+
   return (
     <div>
     <h2>PhoneBook</h2>
+    <div style={addedStyle}>
+      <p>{props.errorMessage}</p>
+    </div>
     filter shown with: <input onChange={props.filterHandler} value={props.filterInput}/>
   </div> 
   )
